@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Golf Performance Tracker</string>
+    <!-- Players list screen -->
+    <string name="players_title">Players</string>
+    <string name="players_search_hint">Search by name or club</string>
+    <string name="players_empty">No players yet. Pull down to refresh.</string>
+    <string name="players_empty_for_query">No players match \"%1$s\".</string>
+
+    <!-- Player item -->
+    <string name="label_avg_speed">avg speed</string>
+    <string name="player_avg_speed_value">%1$.0f mph</string>
+    <string name="cd_player_avatar">Player avatar</string>
 </resources>
