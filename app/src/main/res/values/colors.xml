@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <resources>
-    <color name="black">#FF000000</color>
+
+    <color name="green_primary">#2E7D32</color>
+    <color name="green_primary_dark">#1B5E20</color>
+    <color name="green_light">#A5D6A7</color>
+    <color name="green_container_light">#C8E6C9</color>
+    <color name="green_container_dark">#0F3D14</color>
+
+    <color name="lime_accent">#9CCC65</color>
+
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="surface_light">#FCFDF7</color>
+    <color name="surface_dark">#1A1C18</color>
+    <color name="surface_variant_light">#DEE5D8</color>
+    <color name="surface_variant_dark">#424940</color>
+    <color name="on_surface_light">#1A1C18</color>
+    <color name="on_surface_dark">#E2E3DC</color>
+    <color name="outline_light">#72796F</color>
+    <color name="outline_dark">#8C9388</color>
+
+    <color name="error_light">#BA1A1A</color>
+    <color name="error_container_light">#FFDAD6</color>
+    <color name="on_error_container_light">#410002</color>
+    <color name="error_dark">#FFB4AB</color>
+    <color name="error_container_dark">#93000A</color>
+    <color name="on_error_container_dark">#FFDAD6</color>
 </resources>
