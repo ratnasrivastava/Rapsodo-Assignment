@@ -252,6 +252,7 @@
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
                 tools:itemCount="3"
+                android:layoutAnimation="@anim/layout_animation_fall_down"
                 tools:listitem="@layout/item_shot" />
 
             <TextView

@@ -63,6 +63,7 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:paddingBottom="16dp"
+            android:layoutAnimation="@anim/layout_animation_fall_down"
             tools:listitem="@layout/item_player" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

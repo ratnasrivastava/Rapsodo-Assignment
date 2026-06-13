@@ -14,6 +14,8 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 import me.ratnasrivastava.golfperformancetracker.R
 import me.ratnasrivastava.golfperformancetracker.databinding.FragmentPlayerDetailBinding
+import me.ratnasrivastava.golfperformancetracker.presentation.common.animateNumber
+import me.ratnasrivastava.golfperformancetracker.presentation.common.runLayoutAnimation
 
 @AndroidEntryPoint
 class PlayerDetailFragment : Fragment(R.layout.fragment_player_detail) {
@@ -24,6 +26,8 @@ class PlayerDetailFragment : Fragment(R.layout.fragment_player_detail) {
     private val viewModel: PlayerDetailViewModel by viewModels()
 
     private val shotAdapter by lazy { ShotAdapter() }
+
+    private var statsAnimated = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -67,9 +71,23 @@ class PlayerDetailFragment : Fragment(R.layout.fragment_player_detail) {
                 .into(binding.imagePlayer)
         }
 
-        binding.textTopSpeed.text = getString(R.string.metric_speed, state.topBallSpeed)
-        binding.textLongestCarry.text = getString(R.string.metric_distance, state.longestCarry)
-        binding.textAvgLaunch.text = getString(R.string.metric_angle, state.avgLaunchAngle)
+        if (!statsAnimated && state.shots.isNotEmpty()) {
+            statsAnimated = true
+            binding.textTopSpeed.animateNumber(state.topBallSpeed) {
+                getString(R.string.metric_speed, it)
+            }
+            binding.textLongestCarry.animateNumber(state.longestCarry) {
+                getString(R.string.metric_distance, it)
+            }
+            binding.textAvgLaunch.animateNumber(state.avgLaunchAngle) {
+                getString(R.string.metric_angle, it)
+            }
+        } else if (statsAnimated) {
+            // Keep showing final values without re-animating.
+            binding.textTopSpeed.text = getString(R.string.metric_speed, state.topBallSpeed)
+            binding.textLongestCarry.text = getString(R.string.metric_distance, state.longestCarry)
+            binding.textAvgLaunch.text = getString(R.string.metric_angle, state.avgLaunchAngle)
+        }
 
         binding.textShotsHeader.text =
             getString(R.string.shots_header, state.shots.size)
