@@ -74,6 +74,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.glide)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.room.paging)
     testImplementation(libs.junit)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)

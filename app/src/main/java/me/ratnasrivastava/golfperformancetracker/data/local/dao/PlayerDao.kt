@@ -1,5 +1,6 @@
 package me.ratnasrivastava.golfperformancetracker.data.local.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -9,6 +10,16 @@ import me.ratnasrivastava.golfperformancetracker.data.local.entity.PlayerEntity
 
 @Dao
 interface PlayerDao {
+
+    @Query(
+        """
+        SELECT * FROM players
+        WHERE name LIKE '%' || :query || '%'
+           OR club LIKE '%' || :query || '%'
+        ORDER BY name ASC
+        """
+    )
+    fun pagingSource(query: String): PagingSource<Int, PlayerEntity>
 
     // Observes all players, ordered by name. Emits again on any change.
     @Query("SELECT * FROM players ORDER BY name ASC")

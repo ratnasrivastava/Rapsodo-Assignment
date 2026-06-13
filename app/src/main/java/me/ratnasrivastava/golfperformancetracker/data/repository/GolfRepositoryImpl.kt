@@ -1,5 +1,7 @@
 package me.ratnasrivastava.golfperformancetracker.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -8,7 +10,9 @@ import kotlinx.coroutines.flow.map
 import me.ratnasrivastava.golfperformancetracker.data.local.dao.PlayerDao
 import me.ratnasrivastava.golfperformancetracker.data.local.dao.ShotDao
 import me.ratnasrivastava.golfperformancetracker.data.mapper.toDomain
-import me.ratnasrivastava.golfperformancetracker.data.mapper.toDomainPlayers
+import androidx.paging.PagingData
+import androidx.paging.map
+import kotlinx.coroutines.withContext
 import me.ratnasrivastava.golfperformancetracker.data.mapper.toDomainShots
 import me.ratnasrivastava.golfperformancetracker.data.mapper.toEntity
 import me.ratnasrivastava.golfperformancetracker.data.network.GolfApiService
@@ -30,36 +34,34 @@ class GolfRepositoryImpl @Inject constructor(
     private val dispatchers: DispatcherProvider
 ) : GolfRepository {
 
-    override fun getPlayers(forceRefresh: Boolean): Flow<Resource<List<Player>>> = flow {
-        // 1. Show whatever is cached immediately, in a Loading state.
-        val cached = playerDao.observePlayers()
-        emit(Resource.Loading())
+    override fun getPlayersPaged(query: String): Flow<PagingData<Player>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = PAGE_SIZE,
+                enablePlaceholders = false,
+                initialLoadSize = PAGE_SIZE * 2
+            ),
+            pagingSourceFactory = { playerDao.pagingSource(query) }
+        ).flow.map { pagingData ->
+            // Map entity pages to domain pages lazily, page by page.
+            pagingData.map { entity -> entity.toDomain() }
+        }
+    }
 
-        // 2. Refresh from network if needed.
-        var errorMessage: String? = null
-        if (forceRefresh || playerDao.count() == 0) {
+    override suspend fun refreshPlayers(force: Boolean): Resource<Unit> =
+        withContext(dispatchers.io) {
             try {
-                val remote = api.getPlayers().toDomain()
-                playerDao.upsertAll(remote.map { it.toEntity() })
+                if (force || playerDao.count() == 0) {
+                    val remote = api.getPlayers().map { it.toDomain() }
+                    playerDao.upsertAll(remote.map { it.toEntity() })
+                }
+                Resource.Success(Unit)
             } catch (e: IOException) {
-                errorMessage = "No internet connection. Showing saved data."
+                Resource.Error("No internet connection. Showing saved data.")
             } catch (e: Exception) {
-                errorMessage = e.localizedMessage ?: "Something went wrong while loading players."
+                Resource.Error(e.localizedMessage ?: "Failed to refresh players.")
             }
         }
-
-        // 3. Stream the cache as the source of truth, mapping entities to domain.
-        emitAll(
-            cached.map { entities ->
-                val players = entities.toDomainPlayers()
-                if (errorMessage != null) {
-                    Resource.Error(errorMessage, players)
-                } else {
-                    Resource.Success(players)
-                }
-            }
-        )
-    }.flowOn(dispatchers.io)
 
     override fun getPlayer(playerId: String): Flow<Resource<Player>> =
         playerDao.observePlayer(playerId)
@@ -121,5 +123,9 @@ class GolfRepositoryImpl @Inject constructor(
 
         shotDao.clearForPlayer(playerId)
         shotDao.upsertAll(assigned.map { it.toEntity() })
+    }
+
+    companion object {
+        private const val PAGE_SIZE = 15
     }
 }

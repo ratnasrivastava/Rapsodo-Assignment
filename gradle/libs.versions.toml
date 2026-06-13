@@ -35,6 +35,8 @@ mockk = "1.13.13"
 
 swiperefresh = "1.1.0"
 
+paging ="3.3.6"
+
 [libraries]
 
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -70,6 +72,9 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefresh" }
+
+androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime-ktx", version.ref = "paging" }
+androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "room" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }

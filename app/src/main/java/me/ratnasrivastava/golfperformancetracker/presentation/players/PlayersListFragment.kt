@@ -2,6 +2,7 @@ package me.ratnasrivastava.golfperformancetracker.presentation.players
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.os.bundleOf
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -9,8 +10,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import me.ratnasrivastava.golfperformancetracker.R
 import me.ratnasrivastava.golfperformancetracker.databinding.FragmentPlayersListBinding
@@ -25,7 +28,7 @@ class PlayersListFragment : Fragment(R.layout.fragment_players_list) {
     private val viewModel: PlayersViewModel by viewModels()
 
     private val adapter by lazy {
-        PlayerAdapter(onClick = ::navigateToDetail)
+        PlayerPagingAdapter(onClick = { player -> navigateToDetail(player.id) })
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -35,7 +38,9 @@ class PlayersListFragment : Fragment(R.layout.fragment_players_list) {
         setupRecyclerView()
         setupSearch()
         setupSwipeRefresh()
-        observeState()
+        observePaging()
+        observeLoadState()
+        observeRefreshError()
     }
 
     private fun setupRecyclerView() {
@@ -52,49 +57,66 @@ class PlayersListFragment : Fragment(R.layout.fragment_players_list) {
 
     private fun setupSwipeRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
-            viewModel.refresh()
+            viewModel.refresh(force = true)
         }
     }
 
-    private fun observeState() {
+    private fun observePaging() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state -> render(state) }
+                viewModel.players.collectLatest { pagingData ->
+                    adapter.submitData(pagingData)
+                }
             }
         }
     }
 
-    private fun collect(function: Any) {}
+    private fun observeLoadState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                adapter.loadStateFlow.collectLatest { loadStates ->
+                    val refresh = loadStates.refresh
 
-    private fun render(state: PlayersUiState) {
-        binding.swipeRefresh.isRefreshing = state.isLoading && state.players.isNotEmpty()
-        binding.progressBar.visibility =
-            if (state.isLoading && state.players.isEmpty()) View.VISIBLE else View.GONE
+                    // Show the swipe spinner only while paging is doing initial load.
+                    binding.swipeRefresh.isRefreshing = false
+                    binding.progressBar.visibility =
+                        if (refresh is LoadState.Loading && adapter.itemCount == 0)
+                            View.VISIBLE else View.GONE
 
-        adapter.submitList(state.players)
-
-        binding.textEmpty.visibility = if (state.isEmpty) View.VISIBLE else View.GONE
-        binding.textEmpty.text = if (state.query.isNotBlank()) {
-            getString(R.string.players_empty_for_query, state.query)
-        } else {
-            getString(R.string.players_empty)
+                    // Empty state once a load has finished with no items.
+                    val nothingToShow =
+                        refresh is LoadState.NotLoading && adapter.itemCount == 0
+                    binding.textEmpty.visibility =
+                        if (nothingToShow) View.VISIBLE else View.GONE
+                    binding.textEmpty.text =
+                        if (viewModel.query.value.isNotBlank())
+                            getString(R.string.players_empty_for_query, viewModel.query.value)
+                        else getString(R.string.players_empty)
+                }
+            }
         }
+    }
 
-        state.errorMessage?.let { message ->
-            binding.textError.visibility = View.VISIBLE
-            binding.textError.text = message
-        } ?: run {
-            binding.textError.visibility = View.GONE
+    private fun observeRefreshError() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.refreshError.collectLatest { message ->
+                    if (message != null) {
+                        binding.textError.visibility = View.VISIBLE
+                        binding.textError.text = message
+                    } else {
+                        binding.textError.visibility = View.GONE
+                    }
+                }
+            }
         }
     }
 
     private fun navigateToDetail(playerId: String) {
-        val args = Bundle().apply { putString("playerId", playerId) }
-        findNavController().navigate(R.id.action_players_to_detail, args)
-    }
-
-    private fun navigateToDetail(player: me.ratnasrivastava.golfperformancetracker.domain.model.Player) {
-        navigateToDetail(player.id)
+        findNavController().navigate(
+            R.id.action_players_to_detail,
+            bundleOf("playerId" to playerId)
+        )
     }
 
     override fun onDestroyView() {
