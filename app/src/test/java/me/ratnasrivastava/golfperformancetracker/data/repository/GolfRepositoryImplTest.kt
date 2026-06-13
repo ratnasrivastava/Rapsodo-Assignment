@@ -1,6 +1,5 @@
 package me.ratnasrivastava.golfperformancetracker.data.repository
 
-import app.cash.turbine.test
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -12,13 +11,15 @@ import me.ratnasrivastava.golfperformancetracker.data.network.dto.PlayerDto
 import me.ratnasrivastava.golfperformancetracker.domain.model.Resource
 import me.ratnasrivastava.golfperformancetracker.util.TestDispatcherProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import androidx.paging.PagingSource
+import androidx.paging.testing.asSnapshot
+import io.mockk.every
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GolfRepositoryImplTest {
@@ -47,55 +48,65 @@ class GolfRepositoryImplTest {
     }
 
     @Test
-    fun `when cache is empty it fetches from network and stores result`() = runTest {
+    fun `refresh fetches from network and stores when cache is empty`() = runTest {
         coEvery { playerDao.count() } returns 0
         coEvery { api.getPlayers() } returns listOf(
             PlayerDto("1", "Tiger", "driver", 150.0, 280.0, "")
         )
-        coEvery { playerDao.observePlayers() } returns flowOf(cachedEntities)
 
-        repository.getPlayers(forceRefresh = false).test {
-            // First emission is Loading.
-            assertTrue(awaitItem() is Resource.Loading)
-            // Then Success backed by the cache.
-            val success = awaitItem()
-            assertTrue(success is Resource.Success)
-            assertEquals(2, (success as Resource.Success).data.size)
-            awaitComplete()
-        }
+        val result = repository.refreshPlayers(force = false)
 
-        // Verify the network was called and results persisted.
+        assertTrue(result is Resource.Success)
         coVerify(exactly = 1) { api.getPlayers() }
         coVerify(exactly = 1) { playerDao.upsertAll(any()) }
     }
 
     @Test
-    fun `when cache is populated and no refresh it does not hit network`() = runTest {
+    fun `refresh does not hit network when cache is populated and not forced`() = runTest {
         coEvery { playerDao.count() } returns 2
-        coEvery { playerDao.observePlayers() } returns flowOf(cachedEntities)
 
-        repository.getPlayers(forceRefresh = false).test {
-            assertTrue(awaitItem() is Resource.Loading)
-            assertTrue(awaitItem() is Resource.Success)
-            awaitComplete()
-        }
+        val result = repository.refreshPlayers(force = false)
 
+        assertTrue(result is Resource.Success)
         coVerify(exactly = 0) { api.getPlayers() }
+        coVerify(exactly = 0) { playerDao.upsertAll(any()) }
     }
 
     @Test
-    fun `on network failure it emits error with cached data attached`() = runTest {
+    fun `refresh always hits network when forced`() = runTest {
+        coEvery { playerDao.count() } returns 2
+        coEvery { api.getPlayers() } returns emptyList()
+
+        repository.refreshPlayers(force = true)
+
+        coVerify(exactly = 1) { api.getPlayers() }
+    }
+
+    @Test
+    fun `refresh returns error on network failure`() = runTest {
         coEvery { playerDao.count() } returns 0
         coEvery { api.getPlayers() } throws IOException("offline")
-        coEvery { playerDao.observePlayers() } returns flowOf(cachedEntities)
 
-        repository.getPlayers(forceRefresh = true).test {
-            assertTrue(awaitItem() is Resource.Loading)
-            val result = awaitItem()
-            assertTrue(result is Resource.Error)
-            // Cached data is still present despite the network error.
-            assertEquals(2, (result as Resource.Error).data?.size)
-            awaitComplete()
-        }
+        val result = repository.refreshPlayers(force = true)
+
+        assertTrue(result is Resource.Error)
+    }
+
+    @Test
+    fun `paged players emits cached entities mapped to domain`() = runTest {
+        every { playerDao.pagingSource(any()) } returns FakePlayerPagingSource(cachedEntities)
+
+        val snapshot = repository.getPlayersPaged(query = "").asSnapshot()
+
+        assertEquals(2, snapshot.size)
+        assertEquals("Tiger", snapshot.first().name)
+    }
+
+    private class FakePlayerPagingSource(
+        private val items: List<PlayerEntity>
+    ) : PagingSource<Int, PlayerEntity>() {
+        override fun getRefreshKey(state: androidx.paging.PagingState<Int, PlayerEntity>): Int? = null
+        override suspend fun load(params: LoadParams<Int>): LoadResult<Int, PlayerEntity> =
+            LoadResult.Page(data = items, prevKey = null, nextKey = null)
     }
 }
