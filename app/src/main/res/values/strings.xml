@@ -33,4 +33,7 @@
     <string name="metric_distance">%1$.0f yds</string>
     <string name="metric_spin">%1$.0f rpm</string>
 
+    <!-- Section title string -->
+    <string name="section_carry_chart">Carry distance by shot</string>
+
 </resources>

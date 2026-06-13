@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import me.ratnasrivastava.golfperformancetracker.R
 import me.ratnasrivastava.golfperformancetracker.databinding.FragmentPlayerDetailBinding
 import me.ratnasrivastava.golfperformancetracker.presentation.common.animateNumber
-import me.ratnasrivastava.golfperformancetracker.presentation.common.runLayoutAnimation
+import me.ratnasrivastava.golfperformancetracker.presentation.common.ShotBarChartView
 
 @AndroidEntryPoint
 class PlayerDetailFragment : Fragment(R.layout.fragment_player_detail) {
@@ -82,6 +82,15 @@ class PlayerDetailFragment : Fragment(R.layout.fragment_player_detail) {
             binding.textAvgLaunch.animateNumber(state.avgLaunchAngle) {
                 getString(R.string.metric_angle, it)
             }
+
+            val barData = state.shots.take(8).mapIndexed { index, shot ->
+                ShotBarChartView.Bar(
+                    label = "#${index + 1}",
+                    value = shot.carryDistance.toFloat()
+                )
+            }
+            binding.barChart.setBars(barData)
+
         } else if (statsAnimated) {
             // Keep showing final values without re-animating.
             binding.textTopSpeed.text = getString(R.string.metric_speed, state.topBallSpeed)
@@ -93,6 +102,11 @@ class PlayerDetailFragment : Fragment(R.layout.fragment_player_detail) {
             getString(R.string.shots_header, state.shots.size)
 
         shotAdapter.submitList(state.shots)
+
+
+        binding.barChart.visibility =
+            if (state.shots.isEmpty()) android.view.View.GONE
+            else android.view.View.VISIBLE
 
         binding.textShotsEmpty.visibility =
             if (!state.isLoading && state.shots.isEmpty()) View.VISIBLE else View.GONE
