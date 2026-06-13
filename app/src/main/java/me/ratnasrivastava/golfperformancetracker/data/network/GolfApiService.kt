@@ -7,10 +7,10 @@ import retrofit2.http.Query
 
 interface GolfApiService {
 
-    @GET("api/v1/players")
+    @GET("players")
     suspend fun getPlayers(): List<PlayerDto>
 
-    @GET("api/v1/shots")
+    @GET("shots")
     suspend fun getShots(
         @Query("playerId") playerId: String? = null
     ): List<ShotDto>

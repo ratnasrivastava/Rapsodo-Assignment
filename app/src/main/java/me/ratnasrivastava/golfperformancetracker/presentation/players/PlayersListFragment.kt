@@ -8,6 +8,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import me.ratnasrivastava.golfperformancetracker.R
@@ -37,6 +39,7 @@ class PlayersListFragment : Fragment(R.layout.fragment_players_list) {
     }
 
     private fun setupRecyclerView() {
+        binding.recyclerPlayers.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerPlayers.adapter = adapter
         binding.recyclerPlayers.setHasFixedSize(true)
     }
@@ -70,7 +73,6 @@ class PlayersListFragment : Fragment(R.layout.fragment_players_list) {
 
         adapter.submitList(state.players)
 
-        // Empty state: nothing to show and not loading.
         binding.textEmpty.visibility = if (state.isEmpty) View.VISIBLE else View.GONE
         binding.textEmpty.text = if (state.query.isNotBlank()) {
             getString(R.string.players_empty_for_query, state.query)
@@ -78,7 +80,6 @@ class PlayersListFragment : Fragment(R.layout.fragment_players_list) {
             getString(R.string.players_empty)
         }
 
-        // Error message (shown alongside any cached data).
         state.errorMessage?.let { message ->
             binding.textError.visibility = View.VISIBLE
             binding.textError.text = message
@@ -89,7 +90,7 @@ class PlayersListFragment : Fragment(R.layout.fragment_players_list) {
 
     private fun navigateToDetail(playerId: String) {
         val args = Bundle().apply { putString("playerId", playerId) }
-        // TODO: write navigation
+        findNavController().navigate(R.id.action_players_to_detail, args)
     }
 
     private fun navigateToDetail(player: me.ratnasrivastava.golfperformancetracker.domain.model.Player) {
@@ -98,7 +99,6 @@ class PlayersListFragment : Fragment(R.layout.fragment_players_list) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Avoid leaking the RecyclerView/binding across view recreation.
         binding.recyclerPlayers.adapter = null
         _binding = null
     }

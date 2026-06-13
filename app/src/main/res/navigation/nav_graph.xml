@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/playersListFragment">
+
+    <fragment
+        android:id="@+id/playersListFragment"
+        android:name="me.ratnasrivastava.golfperformancetracker.presentation.players.PlayersListFragment"
+        android:label="Players"
+        tools:layout="@layout/fragment_players_list">
+
+        <action
+            android:id="@+id/action_players_to_detail"
+            app:destination="@id/playerDetailFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/playerDetailFragment"
+        android:name="me.ratnasrivastava.golfperformancetracker.presentation.detail.PlayerDetailFragment"
+        android:label="Player Detail"
+        tools:layout="@layout/fragment_player_detail">
+
+        <argument
+            android:name="playerId"
+            app:argType="string" />
+    </fragment>
+
+</navigation>

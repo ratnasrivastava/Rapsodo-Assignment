@@ -21,7 +21,7 @@ android {
         buildConfigField(
             "String",
             "BASE_URL",
-            "\"https://6a2b7b47b687a7d5cbc550e0.mockapi.io/\""
+            "\"https://6a2b7b47b687a7d5cbc550e0.mockapi.io/api/v1/\""
         )
     }
 

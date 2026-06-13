@@ -10,4 +10,27 @@
     <string name="label_avg_speed">avg speed</string>
     <string name="player_avg_speed_value">%1$.0f mph</string>
     <string name="cd_player_avatar">Player avatar</string>
+
+    <!-- Player detail screen -->
+    <string name="label_avg_distance">avg distance</string>
+    <string name="section_highlights">Performance highlights</string>
+    <string name="label_top_speed">top speed</string>
+    <string name="label_longest_carry">longest carry</string>
+    <string name="label_avg_launch">avg launch</string>
+    <string name="shots_header">Shots (%1$d)</string>
+    <string name="shots_empty">No shots recorded for this player yet.</string>
+
+    <!-- Shot item -->
+    <string name="shot_number">Shot %1$d</string>
+    <string name="label_ball_speed">Ball speed</string>
+    <string name="label_launch_angle">Launch angle</string>
+    <string name="label_carry">Carry</string>
+    <string name="label_spin_rate">Spin rate</string>
+
+    <!-- Metric value formats -->
+    <string name="metric_speed">%1$.0f mph</string>
+    <string name="metric_angle">%1$.1f°</string>
+    <string name="metric_distance">%1$.0f yds</string>
+    <string name="metric_spin">%1$.0f rpm</string>
+
 </resources>
